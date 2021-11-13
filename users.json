@@ -1,0 +1,17 @@
+{
+    "ken": 
+    {
+        "privateKey": "053458b3a3c498c16b05177a378d5a5298b45942be31b6aadf27140cba3b6ec7",
+        "publicKey": "0492daf2896260e09a6d6c39b71f22e047bca5a7a0e9790111376641f215462d8e3f19ec92fea8ba2dec7692536b9a8b9e97597ce273bbc432c81375c90a58df38"
+    },
+    "april":
+    {
+        "privateKey": "ac4ef650b735ce60d0da6a889c425af284ae85ea03188de16389265fc76d19d0",
+        "publicKey": "0400bfe0b458c1caeef237b3af47007f19c0dbc592e516185dd72459a5e9f2a04ab7b846a8cfaf77bc089422112dda2ef24f3f4e0e27e3b1dd5c540f2bb0b9e7e6"
+    },
+    "minerx":
+    {
+        "privateKey": "114c4f8dabf0dc21b6c667044579103072649c716093972f4731113177774e5a",
+        "publicKey": "0458042f3454c01be317bc23d3adb0b8652e968bcd8ea587e393d6024b58bc954a69af4a0296b8f58d5167c9bade285c6beb9fd8a1b7973eadbcb435906d7e586e"
+    }
+}
