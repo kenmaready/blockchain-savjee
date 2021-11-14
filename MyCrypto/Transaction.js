@@ -1,6 +1,6 @@
-const { SHA256 } = require("crypto-js");
-const EC = require("elliptic").ec;
-const ec = new EC('secp256k1');
+import { SHA256 } from "crypto-js";
+import EC from "elliptic";
+const ec = new EC.ec('secp256k1');
 
 class Transaction {
     constructor(from, to, amount) {
@@ -37,4 +37,4 @@ class Transaction {
     }
 }
 
-module.exports = Transaction;
+export default Transaction;

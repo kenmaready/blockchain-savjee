@@ -1,5 +1,5 @@
-const Block = require("./Block");
-const Transaction = require("./Transaction");
+import Block from "./Block.js";
+import Transaction from "./Transaction.js";
 
 class Blockchain {
 
@@ -80,4 +80,4 @@ class Blockchain {
     }
 }
 
-module.exports = Blockchain;
+export default Blockchain;
