@@ -1,4 +1,5 @@
-import { SHA256 } from "crypto-js";
+import sha256 from "crypto-js/sha256.js";
+
 import EC from "elliptic";
 const ec = new EC.ec('secp256k1');
 
@@ -10,10 +11,11 @@ class Transaction {
     }
 
     calculateHash() {
-        return SHA256(this.from + this.to + this.amount).toString();
+        return sha256(this.from + this.to + this.amount).toString();
     }
 
     signTransaction(signingKey){
+        signingKey = ec.keyFromPrivate(signingKey);
         if(signingKey.getPublic('hex') !== this.from) {
             throw new Error("You cannot sign transactions for other wallets.");
         }
@@ -32,7 +34,7 @@ class Transaction {
         }
 
         const publicKey = ec.keyFromPublic(this.from, 'hex');
-        console.log(publicKey.verify(this.calculateHash(), this.signature));
+        // console.log(publicKey.verify(this.calculateHash(), this.signature));
         return publicKey.verify(this.calculateHash(), this.signature);
     }
 }

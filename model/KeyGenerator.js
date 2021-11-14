@@ -5,7 +5,7 @@ class KeyGenerator {
         this.ec = new EC.ec('secp256k1');
     }
 
-    getKeys() {
+    generateKeys() {
         const key = this.ec.genKeyPair();
         const publicKey = key.getPublic('hex');
         const privateKey = key.getPrivate('hex');

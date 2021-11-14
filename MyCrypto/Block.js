@@ -1,4 +1,4 @@
-import SHA256 from 'crypto-js/sha256';
+import sha256 from "crypto-js/sha256.js";
 
 class Block {
     constructor(transactions, previousHash = ""){
@@ -13,7 +13,7 @@ class Block {
     calculateHash() {
         // console.log("transactions:", this.transactions);
         // console.log("nonce:", this.nonce);
-        return SHA256(this.previousHash + this.timestamp +
+        return sha256(this.previousHash + this.timestamp +
             JSON.stringify(this.transactions) + this.nonce).toString();
     }
 

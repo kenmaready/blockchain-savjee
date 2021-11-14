@@ -2,6 +2,7 @@ import Block from "./Block.js";
 import Transaction from "./Transaction.js";
 
 class Blockchain {
+    static blockNumber = 1;
 
     constructor(){
         this.counter = 0;
@@ -19,12 +20,23 @@ class Blockchain {
         return this.chain[this.chain.length - 1];
     }
 
+    getBlock(index) { 
+        if (index >= this.chain.length) {
+            throw new Error(`Out of Bounds Error: There is no block with index ${index} on this chain.`);
+        }
+        return this.chain[index]; 
+    };
+
+    getChain() { return this.chain; };
+
     minePendingTransactions(miner) {
         let block = new Block(this.pendingTransactions, this.getLatestBlock().hash);
         block.mineBlock(this.difficulty);
         
         this.chain.push(block);
-        this.pendingTransactions = [new Transaction(null, miner, this.miningReward)];
+        const transaction = new Transaction(null, miner, this.miningReward);
+        this.pendingTransactions = [transaction];
+        return transaction;
     }
 
     addTransaction(transaction) {
@@ -41,7 +53,6 @@ class Blockchain {
 
     getBalance(address) {
         let balance = 0.0;
-
         for(const block of this.chain) {
             for (const transxn of block.transactions) {
                 if (transxn.to === address) {
@@ -80,4 +91,5 @@ class Blockchain {
     }
 }
 
-export default Blockchain;
+const blockchain = new Blockchain();
+export default blockchain;
