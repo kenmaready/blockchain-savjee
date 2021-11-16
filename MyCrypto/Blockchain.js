@@ -13,7 +13,9 @@ class Blockchain {
     }
 
     createGenesisBlock() {
-        return new Block([new Transaction("god", "001x", 13600500)]);
+        const genBlock = new Block([new Transaction("god", "world", 0)]);
+        genBlock.minedBy = "000000";
+        return genBlock;
     }
 
     getLatestBlock() {
@@ -31,7 +33,7 @@ class Blockchain {
 
     minePendingTransactions(miner) {
         let block = new Block(this.pendingTransactions, this.getLatestBlock().hash);
-        block.mineBlock(this.difficulty);
+        block.mineBlock(this.difficulty, miner);
         
         this.chain.push(block);
         const transaction = new Transaction(null, miner, this.miningReward);
