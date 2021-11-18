@@ -25,7 +25,13 @@ class UserDB {
         return false;
     }
 
-    getUsers() { return this.users; };
+    getUsers() { 
+        const userList = this.users;
+        userList.forEach(u => {
+            u.balance = u.get
+        }) 
+    
+    };
 }
 
 export const userDB = new UserDB();
