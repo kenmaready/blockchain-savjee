@@ -1,7 +1,8 @@
 // import express from "express";
 import bc from "../MyCrypto/Blockchain.js";
-import { User, userDB as db } from "../model/Users.js";
-import Transaction from "../MyCrypto/Transaction.js";
+import { userDB as db } from "../model/Users.js";
+import User from "../model/User.js";
+import Transaction from "../model/Transaction.js";
 
 
 export const welcomeMessage = (req, res) => {
@@ -29,9 +30,9 @@ export const getUsers = (req, res) => {
 }
 
 
-export const registerUser = (req, res) => {
-    const { name, password } = req.body;
-    const user = db.addUser(new User(name, password));
+export const registerUser = async (req, res) => {
+    const { name, password, email } = req.body;
+    const user = await User.create({name, password, email});
 
     res.status(200);
     res.json({ user, success: true });
@@ -52,13 +53,12 @@ export const getKeys = (req, res) => {
     res.json({ privateKey, publicKey, success: true });
 }
 
-export const postTransaction = (req, res) => {
+export const postTransaction = async (req, res) => {
     const { from, to, amount, signingKey } = req.body;
     let transaction;
 
     try {
-        transaction = new Transaction(from, to, amount);
-        transaction.signTransaction(signingKey);
+        transaction = await Transaction.create({from, to, amount: +amount, signingKey});
         bc.addTransaction(transaction);
     } catch (err) {
         res.status(400);

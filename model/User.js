@@ -35,6 +35,7 @@ const UserSchema = new mongoose.Schema(
         publicKey: {
             type: String
         },
+    },{
         timestamps: true,
         toJSON: { versionKey: false },
         toObject: { versionKey: false }
@@ -61,6 +62,9 @@ UserSchema.methods = {
     sanitize: function() {
         this.password = undefined;
         return this;
+    },
+    wallet: function() {
+        return this.publicKey;
     }
 };
 

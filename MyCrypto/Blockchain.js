@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import Block from "./Block.js";
 import Transaction from "./Transaction.js";
 
