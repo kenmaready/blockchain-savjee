@@ -124,10 +124,17 @@ export const submitMiningSolution = async (req, res) => {
 
     const solutionPkg = req.body;
     console.log("submitted solutionPkg:", solutionPkg);
-    const success = await bc.checkSolution(solutionPkg);
+    const validSolution = await bc.checkSolution(solutionPkg);
+
+    if (!validSolution) {
+        res.status(400);
+        return res.json({success: false, message: "That was not a valid solution."});
+    }
+
+    await bc.addBlock(solutionPkg);
 
     res.status(200);
-    res.json({ success, message: "thank you for submitting a solution..."});
+    res.json({ success: true, message: "thank you for submitting a solution..."});
 }
 
 

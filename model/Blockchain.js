@@ -103,6 +103,23 @@ BlockchainSchema.methods = {
         return solution === rebuiltHash;
     },
 
+    async addBlock(solutionPkg) {
+        const { solution, transactions, nonce, minedBy, timestamp, previousHash } = solutionPkg;
+
+        for (const t of transactions) {
+            let transactionIndex;
+            if ((transactionIndex = this.pendingTransactions.indexOf(t._id)) > -1) {
+                console.log(`Removing ${t._id} at position ${transactionIndex}`);
+                this.pendingTransactions.splice(transactionIndex, 1);
+            }
+        }
+        
+        let block = await Block.create({ previousHash, transactions, nonce, minedBy });
+        this.chain.push(block);
+
+        await this.save();
+    },
+
 
     minePendingTransactions(miner) {
         let block = new Block(this.pendingTransactions, this.getLatestBlock().hash);
