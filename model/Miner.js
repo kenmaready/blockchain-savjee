@@ -5,29 +5,42 @@ export default class Miner {
     transactions = [];
     publicKey = null;
     previousHash = null;
-    solution = null;
+    solution = "";
     nonce = 0;
 
-    constructor(publicKey, previousHash, difficulty = difficulty) {
+    constructor(publicKey) {
         this.publicKey = publicKey;
-        this.previousHash = previousHash;
-        this.difficulty = difficulty;
     }
 
-    addTransactions(transactions) {
+    setTransactions(transactions) {
         this.transactions = transactions;
     }
 
+    setPreviousHash(previousHash) {
+        this.previousHash = previousHash;
+    }
+
+    setDifficulty(difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    setMiningInfo({ previousHash, transactions, difficulty }) {
+        this.setTransactions(transactions);
+        this.setPreviousHash(previousHash);
+        this.setDifficulty(difficulty);
+    }
+
     calculateHash() {
-        this.timestamp = Datenow();
+        this.timestamp = Date.now();
         return crypto.createHash('sha256').update(this.previousHash + this.timestamp +
-        JSON.stringify(this.transactions) + this.nonce).toString('hex');
+        JSON.stringify(this.transactions) + this.nonce).digest('hex');
     }
     
     mine() {
         while(this.solution.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
             this.nonce++;
             this.solution = this.calculateHash();
+            console.log(`Attempt no. ${this.nonce}, hash: ${this.solution}`);
         }
         
         console.log("Block mined: ", this.solution);
@@ -35,7 +48,7 @@ export default class Miner {
 
     submitSolution() {
         return {
-            hash: this.solution,
+            solution: this.solution,
             previousHash: this.previousHash,
             transactions: this.transactions,
             nonce: this.nonce,

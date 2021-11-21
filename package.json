@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "startover-dev": "node teardown.js && npm run dev",
+    "delete-bc": "node teardown.js",
     "start": "set NODE_ENV=production&& node server.js"
   },
   "author": "kenmaready (based on savjee)",

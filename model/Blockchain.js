@@ -14,10 +14,7 @@ const godPassword = process.env.GOD_PASSWORD || 'adminPassword';
 const BlockchainSchema = mongoose.Schema({
     difficulty: {
         type: Number,
-        default: difficulty,
-        set(value) {
-            return this.difficulty;
-        }
+        default: difficulty
     },
     chain: [{
         type: ObjectId, ref: 'Block'
@@ -41,11 +38,11 @@ BlockchainSchema.methods = {
         const newBlock = await Block.create(blockInfo);
         this.chain.push(newBlock);
     },
-    
 
-
-    getLatestBlock() {
-        return this.chain[this.chain.length - 1];
+    async getLatestBlock() {
+        const blockId = this.chain[this.chain.length-1];
+        const block = await Block.findById(blockId);
+        return block;
     },
 
     getBlock(index) { 
@@ -57,6 +54,56 @@ BlockchainSchema.methods = {
 
     getChain() { return this.chain; },
 
+    async getCurrentHash() {
+        const latestBlock = await this.getLatestBlock();
+        return latestBlock.getHash();
+    },
+
+    async getMiningInfo() {
+        
+        // get hash of current block (will be "previous hash" for next):
+        const previousHash = await this.getCurrentHash();
+
+        // get basic transxn info for pending transactions:
+        const transactions = await Promise.all(this.pendingTransactions.map(async t => {
+            const transaction = await Transaction.findById(t);
+            return transaction.basicInfo();
+        }));
+
+        return {
+            previousHash,
+            transactions,
+            difficulty: this.difficulty 
+        };
+    },
+
+    async checkSolution(solutionPkg) {
+        const { solution, transactions, nonce, minedBy, timestamp, previousHash } = solutionPkg;
+
+        // validate previouHash:
+        const currentHash = await this.getCurrentHash();
+        if (currentHash !== previousHash) return false;
+
+        // make sure at least one transaction included
+        if (transactions.length === 0) return false;
+
+        // make sure all transactions still remain in pending transactions:
+        for (const t of transactions) {
+            console.log("t:", t);
+            if (!this.pendingTransactions.includes(t._id)) {
+                console.log(`transaction ${t._id} not in pending transactions.`);
+                return false;
+            }
+        }
+
+        // validate that the hash is accurate:
+        const rebuiltHash = crypto.createHash('sha256').update(previousHash + timestamp +
+            JSON.stringify(transactions) + nonce).digest('hex');
+
+        return solution === rebuiltHash;
+    },
+
+
     minePendingTransactions(miner) {
         let block = new Block(this.pendingTransactions, this.getLatestBlock().hash);
         block.mineBlock(this.difficulty, miner);
@@ -67,9 +114,9 @@ BlockchainSchema.methods = {
         return transaction;
     },
 
-    async addTransaction(transactionInfo) {
-        const transaction = await Transaction.create(transactionInfo);
+    async addTransaction(transaction) {
         this.pendingTransactions.push(transaction);
+        await this.save();
     },
 
     getBalance(address) {

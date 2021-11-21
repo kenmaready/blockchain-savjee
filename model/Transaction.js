@@ -52,6 +52,11 @@ TransactionSchema.pre('validate', function(next) {
 });
 
 TransactionSchema.methods = {
+    basicInfo() {
+        const { _id, from, to, amount } = this;
+        return { _id, from, to, amount };
+    },
+
     calculateHash() {
         return crypto.createHash('sha256').update(this.from + this.to + this.amount).toString('hex');
     },

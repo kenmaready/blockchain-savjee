@@ -2,6 +2,8 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
+import EC from "elliptic";
+const ec = new EC.ec('secp256k1');
 
 import KeyGen from "./KeyGenerator.js";
 
@@ -59,10 +61,18 @@ UserSchema.methods = {
     checkPassword: async function(pw) {
         return await bcrypt.compare(pw, this.password);
     },
-    sanitize: function() {
-        this.password = undefined;
-        return this;
+
+    getSigningKey: function() {
+        return ec.keyFromPrivate(this.privateKey);
     },
+
+    toJSON: function() {
+        var obj = this.toObject();
+        delete obj.password;
+        delete obj.privateKey;
+        return obj;
+    },
+
     wallet: function() {
         return this.publicKey;
     }

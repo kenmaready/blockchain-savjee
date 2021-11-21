@@ -34,11 +34,21 @@ BlockSchema.pre('validate', function(next) {
     next();
 });
 
+BlockSchema.pre('save', function(next) {
+    this.hash = this.calculateHash();
+    next();
+})
 
 BlockSchema.methods = {
     calculateHash() {
-        return crypto.createHash('sha256').update(this.previousHash + this.timestamp +
-        JSON.stringify(this.transactions) + this.nonce).toString('hex');
+        const hash = crypto.createHash('sha256').update(this.previousHash + this.timestamp +
+        JSON.stringify(this.transactions) + this.nonce).digest('hex');
+        console.log("hash:", hash);
+        return hash;
+    },
+
+    getHash() {
+        return this.hash;
     },
 
     mineBlock(difficulty, miner) {
