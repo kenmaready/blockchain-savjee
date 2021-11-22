@@ -10,6 +10,8 @@ const difficulty = process.env.MINING_DIFFICULTY || 3;
 const godName = process.env.GOD_NAME || 'god';
 const godEmail = process.env.GOD_EMAIL || 'god@example.com';
 const godPassword = process.env.GOD_PASSWORD || 'adminPassword';
+let godWallet;
+let godSiginingKey;
 
 const BlockchainSchema = mongoose.Schema({
     difficulty: {
@@ -106,18 +108,50 @@ BlockchainSchema.methods = {
     async addBlock(solutionPkg) {
         const { solution, transactions, nonce, minedBy, timestamp, previousHash } = solutionPkg;
 
-        for (const t of transactions) {
-            let transactionIndex;
-            if ((transactionIndex = this.pendingTransactions.indexOf(t._id)) > -1) {
-                console.log(`Removing ${t._id} at position ${transactionIndex}`);
-                this.pendingTransactions.splice(transactionIndex, 1);
-            }
-        }
         
         let block = await Block.create({ previousHash, transactions, nonce, minedBy });
         this.chain.push(block);
+        
+        for (const t of transactions) {
+            await this.processTransaction(t, block.hash, minedBy);
+        }
 
+        const miningRewardTransaction = await Transaction.create({
+            from: godWallet,
+            to: minedBy,
+            amount: this.miningReward,
+            signingKey: godSiginingKey
+        });
+        this.pendingTransactions.push(miningRewardTransaction);
+        
         await this.save();
+    },
+
+    async processTransaction(t, blockHash, minedBy) {
+        // update the transaction record to reflect that it
+        // is now mined and associated with the new block
+        await Transaction.findByIdAndUpdate(t._id, [{ $set: { mined: true }}, { $set: { block: blockHash }}]);
+
+        // update the sender to deduct the amount from
+        // their balanace and also remove the amount from
+        // their pendingTransfers since the transxn has now cleared
+        await User.findOneAndUpdate({publicKey: t.from}, {$inc: { balance: -t.amount }});
+
+        // not sure why I can't combine this update with 
+        // the one above by puttin gin an array, but
+        // is just won't work like that
+        // TODO: Fix that
+        await User.findOneAndUpdate({publicKey: t.from}, {$inc: { pendingTransfers: -t.amount }});
+
+        // update the recipient to add funds to their balanace
+        await User.findOneAndUpdate({publicKey: t.to}, {$inc: { balance: t.amount }});
+
+
+        let transactionIndex;
+        if ((transactionIndex = this.pendingTransactions.indexOf(t._id)) > -1) {
+            console.log(`Removing ${t._id} at position ${transactionIndex}`);
+            this.pendingTransactions.splice(transactionIndex, 1);
+        }
     },
 
 
@@ -193,8 +227,12 @@ BlockchainSchema.statics = {
             name: godName,
             email: godEmail,
             password: godPassword,
-            role: 'admin'
+            role: 'admin',
+            balance: 1000000000
         });
+
+        godWallet = god.publicKey;
+        godSiginingKey = god.privateKey;
 
         console.log('god created');
         const previousHash = crypto.createHash('sha256').update(Date.now().toString()).digest('hex');

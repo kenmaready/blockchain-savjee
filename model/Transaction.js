@@ -4,6 +4,9 @@ import validator from "validator";
 
 import EC from "elliptic";
 const ec = new EC.ec('secp256k1');
+const { ObjectId } = mongoose.Schema;
+
+import User from "./User.js";
 
 const TransactionSchema = mongoose.Schema({
     from: {
@@ -25,6 +28,13 @@ const TransactionSchema = mongoose.Schema({
     },
     signature: {
         type: String
+    },
+    mined: {
+        type: Boolean,
+        default: false
+    },
+    block: {
+        type: ObjectId, ref: "Block"
     }
 }, {
     timestamps: true,
@@ -33,7 +43,7 @@ const TransactionSchema = mongoose.Schema({
     }
 );
 
-TransactionSchema.pre('validate', function(next) {
+TransactionSchema.pre('validate', async function(next) {
     if (!validator.isHexadecimal(this.from) || this.from.length !==130) {
         next(new Error('From address must be a valid secp256k1 key.'));
     }
@@ -46,6 +56,14 @@ TransactionSchema.pre('validate', function(next) {
         next(new Error('Amount must be a positive number.'));
     }
 
+    const sender = await User.findOne({ publicKey: this.from });
+    if (!sender) next(new Error("No User found with that wallet number."));
+
+    if(this.amount > (sender.balance - sender.pendingTransfers)) {
+        next(new Error('Sender does not have enough Shadowcoin for this transfer (taking into account transfers awaiting mining/validation).'));
+    }
+
+    this.addSenderPendingTransfers(sender._id);
     this.signTransaction(this.signingKey);
 
     next();
@@ -70,6 +88,11 @@ TransactionSchema.methods = {
         const hashTx = this.calculateHash();
         const sig = signingKey.sign(hashTx, 'base64');
         this.signature = sig.toDER('hex');
+    },
+
+    async addSenderPendingTransfers(senderId) {
+        const sender = await User.findByIdAndUpdate(senderId, { $inc: { 'pendingTransfers': this.amount }});
+        console.log(`adding ${this.amount} to pending transfers for sender ${sender._id}`);
     },
 
     isValid() {

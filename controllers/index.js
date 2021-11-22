@@ -94,18 +94,18 @@ export const postTransaction = async (req, res) => {
     res.json({success: true, transaction });
 }
 
-export const getBlock = (req, res) => {
+export const getBlock = async (req, res) => {
     let block;
 
     try {
         if (req.params.index) {
-            block = bc.getBlock(+req.params.index);
+            block = await bc.getBlock(+req.params.index);
         } else {
-            block = bc.getLatestBlock();
+            block = await bc.getLatestBlock();
         }
     } catch (err) {
         res.status(404);
-        res.json({ success: false, error: true, message: err.message });
+        return res.json({ success: false, error: true, message: err.message });
     }
 
     res.status(200);

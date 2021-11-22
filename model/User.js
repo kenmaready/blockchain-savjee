@@ -37,6 +37,14 @@ const UserSchema = new mongoose.Schema(
         publicKey: {
             type: String
         },
+        balance: {
+            type: Number,
+            default: 0
+        },
+        pendingTransfers: {
+            type: Number,
+            default: 0
+        }
     },{
         timestamps: true,
         toJSON: { versionKey: false },
