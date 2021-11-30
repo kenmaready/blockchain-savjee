@@ -39,7 +39,7 @@ const UserSchema = new mongoose.Schema(
         },
         balance: {
             type: Number,
-            default: 0
+            default: 100
         },
         pendingTransfers: {
             type: Number,
@@ -65,6 +65,14 @@ UserSchema.pre('save', async function(next) {
     next();
 });
 
+UserSchema.virtual('wallet').get(function() {
+    return this.publicKey;
+});
+
+UserSchema.virtual('signingKey').get(function() {
+    return this.privateKey;
+});
+
 UserSchema.methods = {
     checkPassword: async function(pw) {
         return await bcrypt.compare(pw, this.password);
@@ -77,12 +85,10 @@ UserSchema.methods = {
     toJSON: function() {
         var obj = this.toObject();
         delete obj.password;
-        delete obj.privateKey;
+        if (process.env.TESTING != "true") {
+            delete obj.privateKey;
+        }
         return obj;
-    },
-
-    wallet: function() {
-        return this.publicKey;
     }
 };
 

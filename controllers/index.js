@@ -50,7 +50,7 @@ export const getWallet = async (req, res) => {
     }
 
     res.status(200);
-    res.json({ wallet: user.publicKey, success: true });
+    res.json({ wallet: user.wallet, success: true });
 }
 
 export const getSigningKey = async (req, res) => {
@@ -122,6 +122,7 @@ export const getMiningInfo = async (req, res) => {
 
 export const submitMiningSolution = async (req, res) => {
 
+    console.log("receiving solution...");
     const solutionPkg = req.body;
     console.log("submitted solutionPkg:", solutionPkg);
     const validSolution = await bc.checkSolution(solutionPkg);

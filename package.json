@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "delete-bc": "node teardown.js",
-    "start": "set NODE_ENV=production&& node server.js"
+    "start": "set NODE_ENV=production&& node server.js",
+    "startover": "node teardown.js && nodemon server.js"
   },
   "author": "kenmaready (based on savjee)",
   "license": "ISC",

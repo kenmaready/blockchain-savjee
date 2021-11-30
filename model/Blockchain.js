@@ -3,7 +3,6 @@ import crypto from "crypto";
 import Block from "./Block.js";
 import Transaction from "./Transaction.js";
 import User from "./User.js";
-import Miner from "./Miner.js";
 
 const { ObjectId } = mongoose.Schema;
 const difficulty = process.env.MINING_DIFFICULTY || 3;
@@ -11,7 +10,7 @@ const godName = process.env.GOD_NAME || 'god';
 const godEmail = process.env.GOD_EMAIL || 'god@example.com';
 const godPassword = process.env.GOD_PASSWORD || 'adminPassword';
 let godWallet;
-let godSiginingKey;
+let godSigningKey;
 
 const BlockchainSchema = mongoose.Schema({
     difficulty: {
@@ -27,6 +26,11 @@ const BlockchainSchema = mongoose.Schema({
     miningReward: {
         type: Number,
         default: 100
+    },
+    god: {
+            type: ObjectId,
+            ref: 'User',
+            required: [true, 'Cannot have a Blockchain without a god.']
     }
 }, {
     timestamps: true,
@@ -92,7 +96,9 @@ BlockchainSchema.methods = {
         // make sure all transactions still remain in pending transactions:
         for (const t of transactions) {
             console.log("t:", t);
-            if (!this.pendingTransactions.includes(t._id)) {
+            console.log("this.pendingTransactions:", this.pendingTransactions);
+            const pendingTransactionIds = this.pendingTransactions.map(t => t._id.toString());
+            if (!pendingTransactionIds.includes(t._id)) {
                 console.log(`transaction ${t._id} not in pending transactions.`);
                 return false;
             }
@@ -108,19 +114,31 @@ BlockchainSchema.methods = {
     async addBlock(solutionPkg) {
         const { solution, transactions, nonce, minedBy, timestamp, previousHash } = solutionPkg;
 
-        
-        let block = await Block.create({ previousHash, transactions, nonce, minedBy });
+        let block = await Block.create({
+            previousHash,
+            transactions,
+            nonce,
+            minedBy,
+            minedAt: timestamp
+        });
         this.chain.push(block);
         
         for (const t of transactions) {
             await this.processTransaction(t, block.hash, minedBy);
         }
 
+        const god = await User.findById(this.god);
+
+        console.log("this.god:", god);
+        console.log("this.god.wallet:", this.god.publicKey);
+        console.log("minedBy:", minedBy);
+        console.log("amount:", this.miningReward);
+        console.log("signingKey:", this.god.privateKey);
         const miningRewardTransaction = await Transaction.create({
-            from: godWallet,
+            from: god.wallet,
             to: minedBy,
             amount: this.miningReward,
-            signingKey: godSiginingKey
+            signingKey: god.signingKey
         });
         this.pendingTransactions.push(miningRewardTransaction);
         
@@ -148,7 +166,9 @@ BlockchainSchema.methods = {
 
 
         let transactionIndex;
-        if ((transactionIndex = this.pendingTransactions.indexOf(t._id)) > -1) {
+        console.log("this.pendingTransactions in processTransactions()...", this.pendingTransactions);
+        const pendingTransactionIds = this.pendingTransactions.map(t => t._id.toString());
+        if ((transactionIndex = pendingTransactionIds.indexOf(t._id)) > -1) {
             console.log(`Removing ${t._id} at position ${transactionIndex}`);
             this.pendingTransactions.splice(transactionIndex, 1);
         }
@@ -215,14 +235,32 @@ BlockchainSchema.statics = {
     async getBlockchain() {
         let bc = await this.findOne().sort({ updated: -1}).limit(1);
         if (!bc) {
-            bc = await this.create({});
-            this.createGenesisBlock(bc._id);
+            const god = await this.createGod();
+            const genesisBlock = await this._createGenesisBlock(god.wallet);
+            bc = await this.create({
+                god,
+                chain: [genesisBlock]
+            });
         }
 
         return bc;
     },
 
-    async createGenesisBlock(id) {
+    async _createGenesisBlock(wallet) {
+            const previousHash = crypto.createHash('sha256').update(Date.now().toString()).digest('hex');
+
+            const genesisBlock = await Block.create({
+                previousHash,
+                nonce: 0,
+                minedBy: wallet,
+                minedAt: Date.now()
+            });
+
+            return genesisBlock;
+            // this.save();
+        },
+
+        async createGod() {
         const god = await User.create({
             name: godName,
             email: godEmail,
@@ -230,24 +268,8 @@ BlockchainSchema.statics = {
             role: 'admin',
             balance: 1000000000
         });
-
-        godWallet = god.publicKey;
-        godSiginingKey = god.privateKey;
-
-        console.log('god created');
-        const previousHash = crypto.createHash('sha256').update(Date.now().toString()).digest('hex');
-
-        const genesisBlock = await Block.create({previousHash, nonce: 0, minedBy: god.wallet()});
-
-        this.updateOne(
-            { _id: id },
-            { $push: 
-                { chain: genesisBlock } 
-            }, () => {
-                console.log("block added to chain:", genesisBlock)
-            }
-        );
-    }
+        return god;
+        },
 }
 
 export default mongoose.model('Blockchain', BlockchainSchema);

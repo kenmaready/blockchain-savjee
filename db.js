@@ -6,8 +6,12 @@ const dbConnectionString = process.env.ATLAS_DB_CONNECTION_STRING.replace(
     '<password>', process.env.ATLAS_DB_PASSWORD
 );
 
-mongoose
+const db = mongoose
     .connect(dbConnectionString)
-    .then(() => {
-        console.log('database connected...');
-    });
+    .then(() => console.log("db connected..."))
+        .catch();
+    // mongoose
+    //     .connect(dbConnectionString)
+    //     .then(() => {
+    //         console.log("db connected...");
+    //     });

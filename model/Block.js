@@ -19,6 +19,10 @@ const BlockSchema = mongoose.Schema({
     minedBy: {
         type: String,
         required: [true, "Each Block must include the wallet (public key) of the block's miner."]
+    },
+    minedAt: {
+        type: Number,
+        required: [true, "Each Block must include the time at which it is mined."]
     }
 }, {
     timestamps: true,
@@ -43,7 +47,6 @@ BlockSchema.methods = {
     calculateHash() {
         const hash = crypto.createHash('sha256').update(this.previousHash + this.timestamp +
         JSON.stringify(this.transactions) + this.nonce).digest('hex');
-        console.log("hash:", hash);
         return hash;
     },
 

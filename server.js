@@ -7,10 +7,8 @@ process.on('uncaughtException', (err) => {
 import dotenv from "dotenv";
 dotenv.config({ path: './config.env' });
 import app from "./app.js";
-import "./db.js";
 
 const PORT = process.env.PORT || 3001;
-
 const server = app.listen(PORT, () => {
     console.log(`App listening on port ${PORT}...`);
 });
@@ -26,6 +24,7 @@ process.on('unhandledRejection', (err) => {
 
 process.on('SIGTERM', () => {
     console.log('Termination signal (SIGTERM) received. Shutting down gracefully...');
-    // server.close(() = > console.log('Process terminated.'));
+    server.close(/*() = > console.log('Process terminated.')*/);
 });
+
 
